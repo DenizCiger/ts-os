@@ -1,5 +1,7 @@
 "use client";
 
+import { Taskbar, TaskbarApp } from "@/components/taskbar";
+import { Window } from "@/components/window";
 import { useEffect, useState } from "react";
 
 export default function Home() {
@@ -17,32 +19,22 @@ export default function Home() {
 
   return (
     <>
-      {/* Top Bar */}
-      <div className="flex justify-between bg-black/70 backdrop-blur-md p-2 text-white">
-        <p>TsOS</p>
-        <p>{currentTime}</p>
-      </div>
-      {/* Single Floating OS Window */}
-      <div className="border-gray-500 border w-96 h-64 backdrop-blur-md text-gray-300 m-4 rounded-md flex flex-col overflow-hidden">
-        <div className="flex justify-between border-b border-stone-500 bg-stone-900/50 p-2 w-full shrink-0">
-          <p>Notepad</p>
-          <div className="flex gap-1 text-gray-300">
-            <button className="border border-stone-600 bg-stone-800 rounded-full w-6 h-6">
-              -
-            </button>
-            <button className="border border-stone-600 bg-stone-800 rounded-full w-6 h-6">
-              X
-            </button>
-          </div>
-        </div>
-        {/* Content */}
-        <div className="p-2 flex-1 min-h-0 bg-black/50">
-          <textarea
-            className="w-full h-full bg-transparent text-gray-300 outline-none resize-none"
-            placeholder="Type here..."
-          />
-        </div>
-      </div>
+      <Taskbar
+        leftElements={<p>TsOS</p>}
+        centerElements={
+          <>
+            <TaskbarApp title="Notepad" />
+            <TaskbarApp title="Explorer" />
+          </>
+        }
+        rightElements={<span>{currentTime}</span>}
+      />
+      <Window title="Notepad">
+        <textarea
+          className="w-full h-full bg-transparent text-gray-300 outline-none resize-none"
+          placeholder="Type here..."
+        />
+      </Window>
     </>
   );
 }

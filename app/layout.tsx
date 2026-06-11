@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -17,6 +18,8 @@ export const metadata: Metadata = {
   description: "A simple operating system written in TypeScript.",
 };
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,7 +30,16 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body
+        className="min-h-full flex flex-col"
+        style={
+          {
+            "--wallpaper-image": `url("${basePath}/wallpaper.png")`,
+          } as CSSProperties
+        }
+      >
+        {children}
+      </body>
     </html>
   );
 }

@@ -22,9 +22,7 @@ function clampPosition(position: Position, windowSize: Size, frameSize: Size) {
 
 export default function Home() {
   const desktopRef = useRef<HTMLDivElement>(null);
-  const [currentTime, setCurrentTime] = useState(() =>
-    new Date().toLocaleTimeString(),
-  );
+  const [currentTime, setCurrentTime] = useState("");
   const [desktopSize, setDesktopSize] = useState<Size>({
     width: 0,
     height: 0,
@@ -33,6 +31,8 @@ export default function Home() {
   const [nextZIndex, setNextZIndex] = useState(1);
 
   useEffect(() => {
+    setCurrentTime(new Date().toLocaleTimeString());
+
     const timer = window.setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString());
     }, 1000);

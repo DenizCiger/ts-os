@@ -21,7 +21,7 @@
 
 body {
   /* background: var(--background); */
-  background-image: url("wallpaper.png");
+  background-image: var(--wallpaper-image);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }

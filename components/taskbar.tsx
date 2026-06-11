@@ -23,15 +23,22 @@ export function Taskbar({
 export function TaskbarApp({
   title,
   icon,
+  isRunning,
+  isMinimized,
   onClick,
 }: {
   title: string;
   icon?: React.ReactNode;
+  isRunning?: boolean;
+  isMinimized?: boolean;
   onClick?: () => void;
 }) {
   return (
     <div
-      className="flex items-center gap-2 p-2 hover:bg-gray-600 cursor-pointer rounded"
+      className={`
+        flex items-center border-b-2 gap-2 p-2 cursor-pointer hover:bg-stone-800 rounded-t
+        ${isRunning ? (isMinimized ? "border-gray-500" : "border-gray-100") : "border-transparent"}
+        `}
       onClick={onClick}
     >
       {icon}

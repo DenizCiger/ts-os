@@ -1,4 +1,4 @@
-import { ExplorerApp, NotepadApp } from "@/components/window";
+import { ExplorerApp, NotepadApp, Position, Size } from "@/components/window";
 
 type AppDefinition = {
   id: string;
@@ -29,4 +29,6 @@ export type WindowInstance = {
   title: string;
   status: "open" | "minimized";
   zIndex: number;
+  position: Position;
+  size: Size;
 };

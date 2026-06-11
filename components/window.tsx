@@ -1,6 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
+
+export type Position = { x: number; y: number };
+export type Size = { width: number; height: number };
 
 export function Window({
   title,
@@ -10,6 +13,9 @@ export function Window({
   onFocus,
   zIndex,
   isMinimized,
+  position,
+  size,
+  onMove,
 }: {
   title: string;
   children: React.ReactNode;
@@ -18,8 +24,10 @@ export function Window({
   onFocus?: () => void;
   zIndex?: number;
   isMinimized?: boolean;
+  position: Position;
+  size: Size;
+  onMove: (newPosition: Position) => void;
 }) {
-  const [position, setPosition] = useState({ x: 4, y: 60 });
   const dragOffset = useRef({ x: 0, y: 0 });
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -36,9 +44,9 @@ export function Window({
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!event.buttons) return;
 
-    setPosition({
-      x: Math.max(0, event.clientX - dragOffset.current.x),
-      y: Math.max(0, event.clientY - dragOffset.current.y),
+    onMove({
+      x: event.clientX - dragOffset.current.x,
+      y: event.clientY - dragOffset.current.y,
     });
   };
 
@@ -51,9 +59,15 @@ export function Window({
       className={
         isMinimized
           ? "hidden"
-          : "absolute border border-gray-500 w-96 h-64 backdrop-blur-md text-gray-300 rounded-md flex flex-col overflow-hidden"
+          : "absolute border border-gray-500 backdrop-blur-md text-gray-300 rounded-md flex flex-col overflow-hidden"
       }
-      style={{ left: position.x, top: position.y, zIndex: zIndex ?? 1 }}
+      style={{
+        left: position.x,
+        top: position.y,
+        width: size.width,
+        height: size.height,
+        zIndex: zIndex ?? 1,
+      }}
       onPointerDown={onFocus}
     >
       <div
@@ -83,7 +97,7 @@ export function WindowButton({
   return (
     <button
       onClick={onClick}
-      className="border border-stone-600 bg-stone-800/50 rounded-full w-6 h-6"
+      className="bg-black/20 text-gray-300 rounded-full w-6 h-6 cursor-pointer hover:bg-black/30"
     >
       {children}
     </button>

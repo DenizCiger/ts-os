@@ -31,7 +31,6 @@ export type AppDefinition<TAppId extends AppId = AppId> = {
   title: string;
   icon?: React.ReactNode;
   component: React.ComponentType<AppComponentProps[TAppId]>;
-  pinnedToTaskbar?: boolean;
 };
 
 export const apps = [
@@ -39,14 +38,12 @@ export const apps = [
     id: "notepad",
     title: "Notepad",
     icon: <NotepadText />,
-    pinnedToTaskbar: true,
     component: NotepadApp,
   },
   {
     id: "explorer",
     title: "Explorer",
     icon: <FolderSearch />,
-    pinnedToTaskbar: true,
     component: ExplorerApp,
   },
 ] satisfies [AppDefinition<"notepad">, AppDefinition<"explorer">];

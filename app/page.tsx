@@ -1,6 +1,6 @@
 "use client";
 
-import { Taskbar, TaskbarApp } from "@/components/taskbar";
+import { DesktopIcon, Taskbar, TaskbarApp } from "@/components/taskbar";
 import { Position, Size, Window } from "@/components/window";
 import { AppId, apps, WindowData, WindowInstance } from "@/lib/apps";
 import { FileSystemNode, getNode, initialFiles, isTextFile } from "@/lib/files";
@@ -21,6 +21,12 @@ function clampPosition(position: Position, windowSize: Size, frameSize: Size) {
   };
 }
 
+type AppContextMenu = {
+  appId: AppId;
+  x: number;
+  y: number;
+};
+
 export default function Home() {
   const desktopRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(() =>
@@ -32,6 +38,9 @@ export default function Home() {
     height: 0,
   });
   const [windows, setWindows] = useState<WindowInstance[]>([]);
+  const [pinnedAppIds, setPinnedAppIds] = useState<AppId[]>([]);
+  const [appContextMenu, setAppContextMenu] =
+    useState<AppContextMenu | null>(null);
   const [nextZIndex, setNextZIndex] = useState(1);
 
   useEffect(() => {
@@ -41,6 +50,25 @@ export default function Home() {
 
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!appContextMenu) return;
+
+    const closeContextMenu = () => setAppContextMenu(null);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeContextMenu();
+      }
+    };
+
+    window.addEventListener("click", closeContextMenu);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("click", closeContextMenu);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [appContextMenu]);
 
   useEffect(() => {
     const desktopElement = desktopRef.current;
@@ -84,6 +112,16 @@ export default function Home() {
 
   function getAppWindows(appId: AppId) {
     return windows.filter((windowInstance) => windowInstance.appId === appId);
+  }
+
+  function getApp(appId: AppId) {
+    return apps.find((app) => app.id === appId);
+  }
+
+  function getTaskbarAppIds() {
+    return apps
+      .filter((app) => pinnedAppIds.includes(app.id) || getAppWindows(app.id).length > 0)
+      .map((app) => app.id);
   }
 
   function getTopOpenWindow(appId: AppId) {
@@ -131,7 +169,7 @@ export default function Home() {
   }
 
   function launchApp(appId: AppId) {
-    const app = apps.find((app) => app.id === appId);
+    const app = getApp(appId);
     if (!app) return;
 
     const minimizedWindow = getNextMinimizedWindow(appId);
@@ -240,6 +278,36 @@ export default function Home() {
     setNextZIndex((currentZIndex) => currentZIndex + 1);
   }
 
+  function pinApp(appId: AppId) {
+    setPinnedAppIds((currentPinnedAppIds) =>
+      currentPinnedAppIds.includes(appId)
+        ? currentPinnedAppIds
+        : [...currentPinnedAppIds, appId],
+    );
+    setAppContextMenu(null);
+  }
+
+  function unpinApp(appId: AppId) {
+    setPinnedAppIds((currentPinnedAppIds) =>
+      currentPinnedAppIds.filter((pinnedAppId) => pinnedAppId !== appId),
+    );
+    setAppContextMenu(null);
+  }
+
+  function openAppContextMenu(
+    event: React.MouseEvent<HTMLElement>,
+    appId: AppId,
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setAppContextMenu({
+      appId,
+      x: event.clientX,
+      y: event.clientY,
+    });
+  }
+
   function updateTextFile(fileId: number, content: string) {
     setFiles((currentFiles) =>
       currentFiles.map((file) =>
@@ -298,12 +366,15 @@ export default function Home() {
     <main className="flex h-dvh flex-col overflow-hidden">
       <Taskbar
         leftElements={<p>TsOS</p>}
-        centerElements={apps
-          .filter((app) => app.pinnedToTaskbar)
-          .map((app) => {
+        centerElements={getTaskbarAppIds()
+          .map((appId) => {
+            const app = getApp(appId);
+            if (!app) return null;
+
             const appWindows = getAppWindows(app.id);
             const topOpenWindow = getTopOpenWindow(app.id);
             const topMinimizedWindow = getNextMinimizedWindow(app.id);
+            const isPinned = pinnedAppIds.includes(app.id);
 
             return (
               <TaskbarApp
@@ -311,16 +382,30 @@ export default function Home() {
                 title={app.title}
                 icon={app.icon}
                 isRunning={appWindows.length > 0}
+                isPinned={isPinned}
                 isMinimized={!topOpenWindow && Boolean(topMinimizedWindow)}
                 onClick={() => launchApp(app.id)}
+                onContextMenu={(event) => openAppContextMenu(event, app.id)}
               />
             );
           })}
         rightElements={<span>{currentTime}</span>}
       />
       <div ref={desktopRef} className="relative min-h-0 flex-1 overflow-hidden">
+        <div className="absolute left-4 top-4 z-0 flex flex-col gap-4">
+          {apps.map((app) => (
+            <DesktopIcon
+              key={app.id}
+              title={app.title}
+              icon={app.icon}
+              onClick={() => launchApp(app.id)}
+              onContextMenu={(event) => openAppContextMenu(event, app.id)}
+            />
+          ))}
+        </div>
+
         {windows.map((windowInstance) => {
-          const app = apps.find((app) => app.id === windowInstance.appId);
+          const app = getApp(windowInstance.appId);
           if (!app) return null;
 
           const windowProps = {
@@ -353,6 +438,32 @@ export default function Home() {
             </Window>
           );
         })}
+
+        {appContextMenu && (
+          <div
+            className="fixed z-[9999] min-w-40 overflow-hidden rounded-md border border-stone-600 bg-stone-950/95 py-1 text-sm text-stone-100 shadow-xl backdrop-blur"
+            style={{ left: appContextMenu.x, top: appContextMenu.y }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            {pinnedAppIds.includes(appContextMenu.appId) ? (
+              <button
+                type="button"
+                className="block w-full px-3 py-2 text-left hover:bg-stone-800"
+                onClick={() => unpinApp(appContextMenu.appId)}
+              >
+                Unpin from taskbar
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="block w-full px-3 py-2 text-left hover:bg-stone-800"
+                onClick={() => pinApp(appContextMenu.appId)}
+              >
+                Pin to taskbar
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );

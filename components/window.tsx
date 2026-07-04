@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { FileSystemNode, getChildren, getNode, getParent, getPath } from "@/lib/files";
+import { Folder, Ban, File, ArrowUp } from "lucide-react";
+import { useRef, useState } from "react";
 
 export type Position = { x: number; y: number };
 export type Size = { width: number; height: number };
@@ -114,10 +116,56 @@ export function NotepadApp() {
 }
 
 export function ExplorerApp() {
+  const [cwd, setCwd] = useState(1)
+  const currentDirectory = getNode(cwd);
+  const children: FileSystemNode[] = getChildren(cwd);
+  const parent: FileSystemNode | undefined = currentDirectory === undefined ? undefined : getParent(currentDirectory)
+
+  function handleFileClick(file: FileSystemNode) {
+    switch (file.type) {
+      case 'directory':
+        setCwd(file.id)
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  function renderFileIcon(file: FileSystemNode) {
+    const iconClassName = "w-12 h-12";
+    const Icon = file.type === "directory" ? Folder : File;
+
+    return <Icon className={iconClassName} />;
+  }
+
+
+  function handleBackArrow(): void {
+    if (parent) {
+      setCwd(parent.id)
+    }
+  }
+
   return (
-    <div className="w-full h-full bg-transparent text-gray-300 outline-none resize-none p-2">
-      <p>This is the Explorer app.</p>
-      <p>UI will be added here.</p>
-    </div>
+    <>
+      <div className="w-full border-b border-stone-600 text-stone-400 flex justify-between">
+        {currentDirectory ? getPath(currentDirectory) : "Unknown location"}
+        {parent && (
+          <ArrowUp onClick={() => handleBackArrow()} />
+        )}
+      </div>
+
+      <div className="w-full h-full bg-transparent text-gray-300 flex flex-wrap gap-4">
+        {children.map((file) => (
+          <div key={file.id} className="flex flex-col items-center" onClick={() => handleFileClick(file)}>
+            {renderFileIcon(file)}
+            <h2>{file.name}</h2>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
+
+
+

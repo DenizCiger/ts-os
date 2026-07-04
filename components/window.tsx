@@ -1,7 +1,12 @@
-"use client";
-
-import { FileSystemNode, getChildren, getNode, getParent, getPath } from "@/lib/files";
-import { Folder, Ban, File, ArrowUp } from "lucide-react";
+import {
+  FileSystemNode,
+  TextFile,
+  getChildren,
+  getNode,
+  getParent,
+  getPath,
+} from "@/lib/files";
+import { Folder, ArrowUp, FileText } from "lucide-react";
 import { useRef, useState } from "react";
 
 export type Position = { x: number; y: number };
@@ -106,50 +111,67 @@ export function WindowButton({
   );
 }
 
-export function NotepadApp() {
+export function NotepadApp({
+  file,
+  value,
+  onChange,
+}: {
+  file?: TextFile;
+  value: string;
+  onChange: (content: string) => void;
+}) {
   return (
     <textarea
       className="w-full h-full bg-transparent text-gray-300 outline-none resize-none"
-      placeholder="Type here..."
+      placeholder={file ? undefined : "Type here..."}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
     />
   );
 }
 
-export function ExplorerApp() {
-  const [cwd, setCwd] = useState(1)
-  const currentDirectory = getNode(cwd);
-  const children: FileSystemNode[] = getChildren(cwd);
-  const parent: FileSystemNode | undefined = currentDirectory === undefined ? undefined : getParent(currentDirectory)
+export function ExplorerApp({
+  files,
+  onOpenFile,
+}: {
+  files: FileSystemNode[];
+  onOpenFile: (fileId: number) => void;
+}) {
+  const [cwd, setCwd] = useState(1);
+  const currentDirectory = getNode(files, cwd);
+  const children: FileSystemNode[] = getChildren(files, cwd);
+  const parent: FileSystemNode | undefined =
+    currentDirectory === undefined ? undefined : getParent(files, currentDirectory);
 
   function handleFileClick(file: FileSystemNode) {
     switch (file.type) {
-      case 'directory':
-        setCwd(file.id)
+      case "directory":
+        setCwd(file.id);
         break;
 
       default:
+        onOpenFile(file.id);
         break;
     }
   }
 
   function renderFileIcon(file: FileSystemNode) {
     const iconClassName = "w-12 h-12";
-    const Icon = file.type === "directory" ? Folder : File;
+    const Icon = file.type === "directory" ? Folder : FileText;
 
     return <Icon className={iconClassName} />;
   }
 
-
   function handleBackArrow(): void {
     if (parent) {
-      setCwd(parent.id)
+      setCwd(parent.id);
     }
   }
 
   return (
     <>
-      <div className="w-full border-b border-stone-600 text-stone-400 flex justify-between">
-        {currentDirectory ? getPath(currentDirectory) : "Unknown location"}
+      <div className="w-full border-b border-stone-600 text-stone-400 flex justify-between mb-4">
+        {currentDirectory ? getPath(files, currentDirectory) : "Unknown location"}
         {parent && (
           <ArrowUp onClick={() => handleBackArrow()} />
         )}
@@ -166,6 +188,4 @@ export function ExplorerApp() {
     </>
   );
 }
-
-
 

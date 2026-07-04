@@ -6,16 +6,16 @@ type BaseNode = {
   parentId: number | undefined;
 };
 
-type TextFile = BaseNode & {
+export type TextFile = BaseNode & {
   type: "text";
   content: string;
 };
 
-type Directory = BaseNode & {
+export type Directory = BaseNode & {
   type: "directory";
 };
 
-export const files: FileSystemNode[] = [
+export const initialFiles: FileSystemNode[] = [
   {
     id: 1,
     name: "",
@@ -45,32 +45,36 @@ export const files: FileSystemNode[] = [
     name: "welcome.txt",
     parentId: 2,
     type: "text",
-    content: "Welcome to TS-OS!\nHave a look around and you might find some secrets ;)",
+    content: "Welcome to TS-OS!\nHave a look around and try out the features :)",
   },
   {
     id: 6,
     name: "todo.txt",
     parentId: 2,
     type: "text",
-    content: "- create 2048 game\n- create snake game\n- polish UX",
+    content: "- create 2048 game\n- create snake game\n- polish UI & UX",
   },
 ];
 
-export function getChildren(parentId: number) {
-  return files.filter((node) => node.parentId === parentId);
+export function isTextFile(node: FileSystemNode): node is TextFile {
+  return node.type === "text";
 }
 
-export function getNode(id: number) {
-  return files.find((node) => node.id === id);
+export function getChildren(nodes: FileSystemNode[], parentId: number) {
+  return nodes.filter((node) => node.parentId === parentId);
 }
 
-export function getParent(node: FileSystemNode) {
+export function getNode(nodes: FileSystemNode[], id: number) {
+  return nodes.find((node) => node.id === id);
+}
+
+export function getParent(nodes: FileSystemNode[], node: FileSystemNode) {
   return node.parentId === undefined
     ? undefined
-    : getNode(node.parentId);
+    : getNode(nodes, node.parentId);
 }
 
-export function getPath(node: FileSystemNode) {
+export function getPath(nodes: FileSystemNode[], node: FileSystemNode) {
   const names: string[] = [];
   let current: FileSystemNode | undefined = node;
 
@@ -82,8 +86,8 @@ export function getPath(node: FileSystemNode) {
       break;
     }
 
-    current = getNode(current.parentId);
+    current = getNode(nodes, current.parentId);
   }
 
-  return '/' + names.join("/");
+  return "/" + names.join("/");
 }
